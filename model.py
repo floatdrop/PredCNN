@@ -34,8 +34,7 @@ class VideoPixelNetworkModel:
                 1,
                 padding='same',
                 activation=None,
-                kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                name='h4'
+                kernel_initializer=tf.contrib.layers.xavier_initializer()
             )
 
             return h
@@ -57,7 +56,7 @@ class VideoPixelNetworkModel:
             self.output = self.decoder(encoders[0])
 
         with tf.name_scope('loss'):
-            labels = tf.one_hot(tf.cast(tf.squeeze(self.sequences[:, 1:]), tf.int32),
+            labels = tf.one_hot(tf.cast(tf.squeeze(self.sequences[:, -1]), tf.int32),
                                 256,
                                 axis=-1,
                                 dtype=tf.float32)

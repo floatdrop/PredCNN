@@ -18,7 +18,7 @@ class video_pixel_network_config:
     # Training config
     epochs_num = 50000
     iters_per_epoch = 450
-    truncated_steps = 6
+    truncated_steps = 9
     learning_rate = 3 * 1e-4
 
     # Data config
