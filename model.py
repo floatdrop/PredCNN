@@ -279,6 +279,18 @@ class VideoPixelNetworkModel:
 
             return h
 
+    def resolution_preserving_cnn_decoders(self, h, x):
+        with tf.variable_scope('resolution_preserving_cnn_decoders'):
+            h = self.residual_multiplicative_block_without_mask(h, 1, '00')
+
+            h = (x, h)
+            h = self.residual_multiplicative_block_without_mask(h, 1, str(1))
+
+            for i in range(2, self.config.decoder_rmb_num):
+                h = self.residual_multiplicative_block_with_mask(h, 1, str(i))
+
+            return h
+
     def conv_lstm(self, x, h):
         with tf.variable_scope('Conv_LSTM') as scope:
             convlstm_cell = BasicConvLSTMCell(
