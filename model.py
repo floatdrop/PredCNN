@@ -13,8 +13,8 @@ class VideoPixelNetworkModel:
 
         self.build_model()
 
-    def multiplicative_unit_without_mask(self, h, dilation_rate, scope):
-        with tf.variable_scope('multiplicative_unit_without_mask_' + scope):
+    def multiplicative_unit(self, h, dilation_rate, scope):
+        with tf.variable_scope('multiplicative_unit_' + scope):
             g1 = tf.layers.conv2d(
                 h,
                 self.config.rmb_c,
@@ -66,8 +66,8 @@ class VideoPixelNetworkModel:
 
             return mu
 
-    def residual_multiplicative_block_without_mask(self, h, dilation_rate, scope):
-        with tf.variable_scope('residual_multiplicative_block_without_mask_' + scope):
+    def residual_multiplicative_block(self, h, dilation_rate, scope):
+        with tf.variable_scope('residual_multiplicative_block_' + scope):
             h1 = tf.layers.conv2d(
                 h,
                 self.config.rmb_c,
@@ -78,9 +78,9 @@ class VideoPixelNetworkModel:
                 name='h1'
             )
 
-            h2 = self.multiplicative_unit_without_mask(h1, dilation_rate, '1')
+            h2 = self.multiplicative_unit(h1, dilation_rate, '1')
 
-            h3 = self.multiplicative_unit_without_mask(h2, dilation_rate, '2')
+            h3 = self.multiplicative_unit(h2, dilation_rate, '2')
 
             h4 = tf.layers.conv2d(
                 h3,
@@ -99,10 +99,10 @@ class VideoPixelNetworkModel:
 
     def cascade_multiplicative_unit(self, prev_h, curr_h, dilation_rate, scope):
         with tf.variable_scope('cascade_multiplicative_unit_' + scope, reuse=tf.AUTO_REUSE):
-            h1 = self.multiplicative_unit_without_mask(prev_h, dilation_rate, 'prev_mu_1')
-            h1 = self.multiplicative_unit_without_mask(h1, dilation_rate, 'prev_mu_1')
+            h1 = self.multiplicative_unit(prev_h, dilation_rate, 'prev_mu_1')
+            h1 = self.multiplicative_unit(h1, dilation_rate, 'prev_mu_1')
 
-            h2 = self.multiplicative_unit_without_mask(curr_h, dilation_rate, 'curr_mu_1')
+            h2 = self.multiplicative_unit(curr_h, dilation_rate, 'curr_mu_1')
 
             h = h1 + h2
 
@@ -134,22 +134,17 @@ class VideoPixelNetworkModel:
             )
             for i in range(self.config.encoder_rmb_num):
                 if self.config.encoder_rmb_dilation:
-                    x = self.residual_multiplicative_block_without_mask(x, self.config.encoder_rmb_dilation_scheme[i],
+                    x = self.residual_multiplicative_block(x, self.config.encoder_rmb_dilation_scheme[i],
                                                                         str(i))
                 else:
-                    x = self.residual_multiplicative_block_without_mask(x, 1, str(i))
+                    x = self.residual_multiplicative_block(x, 1, str(i))
 
             return x
 
     def resolution_preserving_cnn_decoders(self, h, x):
         with tf.variable_scope('resolution_preserving_cnn_decoders'):
-            h = self.residual_multiplicative_block_without_mask(h, 1, '00')
-
-            h = (x, h)
-            h = self.residual_multiplicative_block_without_mask(h, 1, str(1))
-
-            for i in range(2, self.config.decoder_rmb_num):
-                h = self.residual_multiplicative_block_with_mask(h, 1, str(i))
+            for i in range(0, self.config.decoder_rmb_num):
+                h = self.residual_multiplicative_block(h, 1, str(i))
 
             return h
 
