@@ -245,6 +245,30 @@ class VideoPixelNetworkModel:
 
             return rmb
 
+    def cascade_multiplicative_unit(self, prev_h, curr_h, dilation_rate, scope):
+        with tf.variable_scope('cascade_multiplicative_unit_' + scope):
+            h1 = self.multiplicative_unit_without_mask(prev_h, dilation_rate, 'prev_mu_1')
+            h1 = self.multiplicative_unit_without_mask(h1, dilation_rate, 'prev_mu_2')
+
+            h2 = self.multiplicative_unit_without_mask(curr_h, dilation_rate, 'curr_mu_1')
+
+            h = h1 + h2
+
+            o = tf.layers.conv2d(
+                h,
+                self.config.rmb_c,
+                3,
+                dilation_rate=dilation_rate,
+                padding='same',
+                activation=tf.sigmoid,
+                kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                name='o'
+            )
+
+            cmu = tf.multiply(o, tf.tanh(h))
+
+            return cmu
+
     def resolution_preserving_cnn_encoders(self, x):
         with tf.variable_scope('resolution_preserving_cnn_encoders'):
             x = tf.layers.conv2d(
