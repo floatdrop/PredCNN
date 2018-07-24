@@ -74,12 +74,7 @@ class Trainer:
                 warmup_batch, train_batch = self.data_generator.next_batch()
 
                 feed_dict = {self.model.sequences: train_batch}
-                if itr == self.config.iters_per_epoch - 1:
-                    loss, _, summaries = self.sess.run([self.model.loss, self.model.optimizer, self.model.summaries],
-                                                       feed_dict)
-                    self.logger.add_merged_summary(self.global_step_tensor.eval(self.sess), summaries)
-                else:
-                    loss, _ = self.sess.run([self.model.loss, self.model.optimizer], feed_dict)
+                loss, _ = self.sess.run([self.model.loss, self.model.optimizer], feed_dict)
                 losses.append(loss)
 
                 self.sess.run(self.global_step_assign_op,
@@ -89,9 +84,9 @@ class Trainer:
             self.logger.add_scalar_summary(self.global_step_tensor.eval(self.sess), {'train_loss': np.mean(losses)})
             self.sess.run(self.cur_epoch_assign_op, {self.cur_epoch_input: self.cur_epoch_tensor.eval(self.sess) + 1})
 
-            if epoch % self.config.test_every == 0:
-                self.test()
-                self.save()
+            # if epoch % self.config.test_every == 0:
+            #     self.test()
+            #     self.save()
 
         Logger.info("Training finished")
 
