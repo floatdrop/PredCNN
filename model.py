@@ -98,9 +98,9 @@ class VideoPixelNetworkModel:
 
 
     def cascade_multiplicative_unit(self, prev_h, curr_h, dilation_rate, scope):
-        with tf.variable_scope('cascade_multiplicative_unit_' + scope):
+        with tf.variable_scope('cascade_multiplicative_unit_' + scope, reuse=tf.AUTO_REUSE):
             h1 = self.multiplicative_unit_without_mask(prev_h, dilation_rate, 'prev_mu_1')
-            h1 = self.multiplicative_unit_without_mask(h1, dilation_rate, 'prev_mu_2')
+            h1 = self.multiplicative_unit_without_mask(h1, dilation_rate, 'prev_mu_1')
 
             h2 = self.multiplicative_unit_without_mask(curr_h, dilation_rate, 'curr_mu_1')
 
