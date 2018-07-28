@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from logger import Logger
 import os
+from scipy.misc import imsave
 
 
 class Trainer:
@@ -71,7 +72,7 @@ class Trainer:
             epoch = self.cur_epoch_tensor.eval(self.sess)
 
             for itr in range(self.config.iters_per_epoch):
-                warmup_batch, train_batch = self.data_generator.next_batch()
+                train_batch = self.data_generator.next_batch()
 
                 feed_dict = {self.model.sequences: train_batch}
                 loss, _ = self.sess.run([self.model.loss, self.model.optimizer], feed_dict)
@@ -84,15 +85,31 @@ class Trainer:
             self.logger.add_scalar_summary(self.global_step_tensor.eval(self.sess), {'train_loss': np.mean(losses)})
             self.sess.run(self.cur_epoch_assign_op, {self.cur_epoch_input: self.cur_epoch_tensor.eval(self.sess) + 1})
 
-            # if epoch % self.config.test_every == 0:
-            #     self.test()
-            #     self.save()
+            if epoch > 0 and epoch % self.config.test_every == 0:
+                self.test(epoch)
+                self.save()
 
         Logger.info("Training finished")
 
-    def test(self):
+    def test(self, step):
         Logger.info("Starting testing...")
+        p = self.config.summary_dir + 'test/' + str(step)
+        if not os.path.exists(p):
+            os.makedirs(p)
+        for i in range(10):
+            if self.config.overfitting:
+                test_batch = self.data_generator.next_batch()
+            else:
+                test_batch = self.data_generator.test_batch()
 
-        raise NotImplementedError()
 
+            feed_dict = {self.model.sequences: test_batch}
+            output = self.sess.run(self.model.output, feed_dict)
+            output = np.argmax(output, axis=3)[0]
+            diff = np.zeros((self.config.input_shape[0], self.config.input_shape[1], 3))
+            diff[:, :, 0] = output
+            diff[:, :, 1] = test_batch[0][-1].reshape((self.config.input_shape[0], self.config.input_shape[1]))
+
+            imsave(p + '/' + str(i) + '.png', diff)
+        
         Logger.info("Testing finished")

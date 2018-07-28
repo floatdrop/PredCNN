@@ -60,8 +60,12 @@ class VideoPixelNetworkModel:
                                 256,
                                 axis=-1,
                                 dtype=tf.float32)
+
             self.loss = tf.reduce_mean(
                 tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.output, labels=labels))
-            self.optimizer = tf.train.RMSPropOptimizer(learning_rate=self.config.learning_rate).minimize(self.loss)
+
+            # self.loss = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(labels, self.output))))
+
+            self.optimizer = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.loss)
 
         self.summaries = tf.summary.merge_all('vpn')
