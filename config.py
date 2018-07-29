@@ -1,5 +1,5 @@
 class video_pixel_network_config:
-    input_shape = [64, 64, 1]
+    input_shape = [192, 192, 1]
 
     # RMB config
     rmb_c = 64
@@ -14,7 +14,7 @@ class video_pixel_network_config:
 
     # Training config
     epochs_num = 50000
-    iters_per_epoch = 1 # 450
+    iters_per_epoch = 100 # 450
     truncated_steps = 6
     learning_rate = 1e-4
 
@@ -23,4 +23,4 @@ class video_pixel_network_config:
 
     # tensorflow config
     max_to_keep = 3
-    test_every = 100
+    test_every = 10

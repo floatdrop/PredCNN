@@ -6,12 +6,10 @@ class GenerateData:
     def __init__(self, config):
         self.config = config
         np.random.seed(123)
-        # sequences = np.load(config.data_dir).transpose((1, 0, 2, 3))
-        sequences = np.load(config.data_dir, mmap_mode='r')
-        # sequences = np.expand_dims(np.squeeze(sequences), 4)
+        sequences = np.memmap(config.data_dir, 
+                              shape=(10000,20,self.config.input_shape[0], self.config.input_shape[1], 1),
+                              mode='r', dtype=np.float32)
         shuffled_idxs = np.arange(sequences.shape[0])
-        # np.random.shuffle(shuffled_idxs)
-        # sequences = sequences[shuffled_idxs]
 
         # print(('data shape', sequences.shape))
 

@@ -10,7 +10,7 @@ tf.app.flags.DEFINE_string('vpn_arch', "", """ full, mini or micro """)
 tf.app.flags.DEFINE_boolean('train', True, """ train flag """)
 tf.app.flags.DEFINE_boolean('overfitting', False, """ overfitting flag """)
 tf.app.flags.DEFINE_boolean('load', True, """ model loading flag """)
-tf.app.flags.DEFINE_integer('batch_size', 8, """ batch size for training """)
+tf.app.flags.DEFINE_integer('batch_size', 1, """ batch size for training """)
 tf.app.flags.DEFINE_string('data_dir', "/tmp/vpn/mnist_test_seq.npy", """ data directory """)
 tf.app.flags.DEFINE_string('exp_dir', "/tmp/vpn/", """ experiment directory """)
 

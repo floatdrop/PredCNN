@@ -2,7 +2,8 @@ import tensorflow as tf
 import numpy as np
 from logger import Logger
 import os
-from scipy.misc import imsave
+from imageio import imwrite
+from tqdm import tqdm
 
 
 class Trainer:
@@ -71,7 +72,7 @@ class Trainer:
 
             epoch = self.cur_epoch_tensor.eval(self.sess)
 
-            for itr in range(self.config.iters_per_epoch):
+            for itr in tqdm(range(self.config.iters_per_epoch)):
                 train_batch = self.data_generator.next_batch()
 
                 feed_dict = {self.model.sequences: train_batch}
@@ -102,7 +103,6 @@ class Trainer:
             else:
                 test_batch = self.data_generator.test_batch()
 
-
             feed_dict = {self.model.sequences: test_batch}
             output = self.sess.run(self.model.output, feed_dict)
             output = np.argmax(output, axis=3)[0]
@@ -110,6 +110,6 @@ class Trainer:
             diff[:, :, 0] = output
             diff[:, :, 1] = test_batch[0][-1].reshape((self.config.input_shape[0], self.config.input_shape[1]))
 
-            imsave(p + '/' + str(i) + '.png', diff)
+            imwrite(p + '/' + str(i) + '.png', diff.astype(np.uint8))
         
         Logger.info("Testing finished")
