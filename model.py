@@ -2,7 +2,11 @@ import tensorflow as tf
 from units import ResidualMultiplicativeBlock as RMB, CascadeMultiplicativeUnit as CMU
 
 
-class VideoPixelNetworkModel:
+def share_variables(func):
+    return tf.make_template(func.__name__, func, create_scope_now_=True)
+
+
+class PredCNN:
     def __init__(self, config):
         self.config = config
 
@@ -13,17 +17,8 @@ class VideoPixelNetworkModel:
 
         self.build_model()
 
-    def encoder(self, h):
-        for i in range(self.config.encoder_rmb_num):
-            if self.config.encoder_rmb_dilation:
-                h = RMB(dilation_rate=self.config.encoder_rmb_dilation_scheme[i], filters=self.config.rmb_c)(h)
-            else:
-                h = RMB(filters=self.config.rmb_c)(h)
-
-        return h
-
     def decoder(self, h):
-        with tf.variable_scope('decoders'):
+        with tf.name_scope('decoder'):
             for i in range(0, self.config.decoder_rmb_num):
                 h = RMB(filters=self.config.rmb_c)(h)
 
@@ -39,17 +34,26 @@ class VideoPixelNetworkModel:
             return h
 
     def build_model(self):
+        @share_variables
+        def encoder(h):
+            for i in range(self.config.encoder_rmb_num):
+                if self.config.encoder_rmb_dilation:
+                    h = RMB(dilation_rate=self.config.encoder_rmb_dilation_scheme[i], filters=self.config.rmb_c)(h)
+                else:
+                    h = RMB(filters=self.config.rmb_c)(h)
+
+            return h
+
         with tf.name_scope('training_graph'):
             encoders = []
+
             for i in range(self.config.truncated_steps):
-                with tf.name_scope('encoder_%i' % i):
-                    encoders.append(self.encoder(self.sequences[:, i]))
+                encoders.append(encoder(self.sequences[:, i]))
 
             while len(encoders) > 1:
                 new_layer = []
                 for first, second in zip(encoders, encoders[1:]):
-                    with tf.name_scope('CMU_%i_%i' % (len(encoders) - 1, i)):
-                        new_layer.append(CMU(filters=self.config.rmb_c)(first, second))
+                    new_layer.append(CMU(filters=self.config.rmb_c)(first, second))
                 encoders = new_layer
 
             self.output = self.decoder(encoders[0])
@@ -62,8 +66,6 @@ class VideoPixelNetworkModel:
 
             self.loss = tf.reduce_mean(
                 tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.output, labels=labels))
-
-            # self.loss = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(labels, self.output))))
 
             self.optimizer = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.loss)
 

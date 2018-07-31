@@ -1,37 +1,28 @@
+from os import path
 import tensorflow as tf
-from config import *
-from model import VideoPixelNetworkModel
+import config
+from model import PredCNN
 from data_generator import GenerateData
 from trainer import Trainer
 from logger import Logger
 
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string('vpn_arch', "", """ full, mini or micro """)
+tf.app.flags.DEFINE_string('name', "predcnn", """ experiment name """)
 tf.app.flags.DEFINE_boolean('train', True, """ train flag """)
 tf.app.flags.DEFINE_boolean('overfitting', False, """ overfitting flag """)
 tf.app.flags.DEFINE_boolean('load', True, """ model loading flag """)
 tf.app.flags.DEFINE_integer('batch_size', 1, """ batch size for training """)
-tf.app.flags.DEFINE_string('data_dir', "/tmp/vpn/mnist_test_seq.npy", """ data directory """)
-tf.app.flags.DEFINE_string('exp_dir', "/tmp/vpn/", """ experiment directory """)
+tf.app.flags.DEFINE_string('data_dir', "data.dat", """ data directory """)
+tf.app.flags.DEFINE_string('exp_dir', "/tmp/predcnn", """ experiment directory """)
 
 
 def main(_):
     tf.reset_default_graph()
     tf.logging.set_verbosity(tf.logging.INFO)
 
-    config = tf.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.allow_growth = True
-    sess = tf.Session(config=config)
-
-    if FLAGS.vpn_arch == 'full':
-        config = video_pixel_network_config()
-    elif FLAGS.vpn_arch == 'mini':
-        config = mini_video_pixel_network_config()
-    elif FLAGS.vpn_arch == 'micro':
-        config = micro_video_pixel_network_config()
-    else:
-        Logger.info('wrong vpn_arch flag')
-        return
+    tf_config = tf.ConfigProto(allow_soft_placement=True)
+    tf_config.gpu_options.allow_growth = True
+    sess = tf.Session(config=tf_config)
 
     if FLAGS.train is not None:
         config.train = FLAGS.train
@@ -48,11 +39,11 @@ def main(_):
     if FLAGS.data_dir is not None:
         config.data_dir = FLAGS.data_dir
     if FLAGS.exp_dir is not None:
-        config.summary_dir = FLAGS.exp_dir + FLAGS.vpn_arch + '/'
-        config.checkpoint_dir = config.summary_dir + 'checkpoints/'
+        config.summary_dir = path.join(FLAGS.exp_dir, FLAGS.name)
+        config.checkpoint_dir = path.join(config.summary_dir, 'checkpoints')
 
     Logger.info('Starting building the model...')
-    vpn = VideoPixelNetworkModel(config)
+    vpn = PredCNN(config)
     data_generator = GenerateData(config)
     trainer = Trainer(sess, vpn, data_generator, config)
     Logger.info('Finished building the model')
