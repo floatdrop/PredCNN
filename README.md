@@ -1,38 +1,8 @@
-# VPN: Video Pixel Networks in Tensorflow 
-The VPN is a probabilistic video model that estimates the discrete joint distribution of the raw pixel values in a video. It approaches the best possible performance on the Moving MNIST benchmark. 
+# PredCNN: Predictive Learning with Cascade Convolutions in Tensorflow 
 
-This repository contains a tensorflow implementation of the VPN architecture proposed in the [paper](https://arxiv.org/abs/1610.00527). However, this code hasn’t been trained and tested on the full Moving MNIST dataset due to lack of the computation power. It has been overfitted on one sequence to insure the correctness of the implementation. 
+PredCNN is a kind of combination of Temporal Convolutional Networks described in work [An Empirical Evaluation of Generic Convolutional and Recurrent Networks for Sequence Modeling](https://arxiv.org/abs/1803.01271) by Shaojie Bai, J. Zico Kolter and Vladlen Koltun and [Video Pixel Networks](https://arxiv.org/abs/1610.00527) by
+Nal Kalchbrenner, Aaron van den Oord, Karen Simonyan, Ivo Danihelka, Oriol Vinyals, Alex Graves, Koray Kavukcuoglu.
 
-This repository also contains some additional experiments with the VPN architecture that are not mentioned in the original paper. These experiments are:
-* Mini VPN architecture.
-* Micro VPN architecture.
+This repository contains a tensorflow implementation of the overlapping PredCNN architecture proposed in the [paper](https://www.ijcai.org/proceedings/2018/0408.pdf7).
 
-## Examples of the network output
-##### Here's different steps from predicting the first frame pixel-by-pixel:
-![alt text](https://github.com/3ammor/Video-Pixel-Networks/blob/master/images/0.PNG "frame 1")
-![alt text](https://github.com/3ammor/Video-Pixel-Networks/blob/master/images/1.PNG "frame 2")
-![alt text](https://github.com/3ammor/Video-Pixel-Networks/blob/master/images/2.PNG "frame 3")
-![alt text](https://github.com/3ammor/Video-Pixel-Networks/blob/master/images/3.PNG "frame 4")
-
-## The loss curves for the different architectures
-##### full:pink
-##### mini:red
-##### micro:orange
-![alt text](https://github.com/3ammor/Video-Pixel-Networks/blob/master/images/graph.PNG "loss")
-
-
-### The Moving MNIST Dataset
-You can download the full moving MNIST dataset from toronto [website](http://www.cs.toronto.edu/~nitish/unsupervised_video/). 
-
-### Overfitting On One Sequence
-```
-python vpn.py --vpn_arch='mini' --train=True --overfitting=Ture --data_dir='/numpy/file/directory/' --exp_dir='/tmp/vpn/'
-```
-
-### Training On The Full Dataset
-```
-python vpn.py --vpn_arch='mini' --train=True --overfitting=False --data_dir='/numpy/file/directory/' --exp_dir='/tmp/vpn/'
-```
-
-### TODO
-* Train on data generated on the air.
+Repository is still under heavy overhaul – some changes have been made to accomodate larger datasets (around 30Gb), some refactoring applyed.
