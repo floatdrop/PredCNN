@@ -6,3 +6,5 @@ Nal Kalchbrenner, Aaron van den Oord, Karen Simonyan, Ivo Danihelka, Oriol Vinya
 This repository contains a tensorflow implementation of the overlapping PredCNN architecture proposed in the [paper](https://www.ijcai.org/proceedings/2018/0408.pdf7).
 
 Repository is still under heavy overhaul – some changes have been made to accomodate larger datasets (around 30Gb), some refactoring applyed.
+
+Huge thanks to [3ammor](https://github.com/3ammor) for initial [VPN implementation in tensorflow](https://github.com/3ammor/Video-Pixel-Networks), on which work this code is based.
