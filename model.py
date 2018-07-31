@@ -1,6 +1,5 @@
 import tensorflow as tf
-from logger import Logger
-from units import MultiplicativeUnit as MU, ResidualMultiplicativeBlock as RMB, CascadeMultiplicativeUnit as CMU
+from units import ResidualMultiplicativeBlock as RMB, CascadeMultiplicativeUnit as CMU
 
 
 class VideoPixelNetworkModel:
