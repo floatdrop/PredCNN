@@ -4,6 +4,7 @@ from logger import Logger
 import os
 from imageio import imwrite
 from tqdm import tqdm
+import imageio
 
 
 class Trainer:
@@ -75,7 +76,10 @@ class Trainer:
             for itr in tqdm(range(self.config.iters_per_epoch)):
                 train_batch = self.data_generator.next_batch()
 
-                feed_dict = {self.model.sequences: train_batch}
+                feed_dict = {
+                    self.model.sequences: train_batch[:, :-1],
+                    self.model.targets: train_batch[:, -1:]
+                }
                 loss, _ = self.sess.run([self.model.loss, self.model.optimizer], feed_dict)
                 losses.append(loss)
 
@@ -94,22 +98,22 @@ class Trainer:
 
     def test(self, step):
         Logger.info("Starting testing...")
-        p = self.config.summary_dir + 'test/' + str(step)
+        p =  os.path.join(self.config.summary_dir,'test', str(step))
         if not os.path.exists(p):
             os.makedirs(p)
-        for i in range(10):
-            if self.config.overfitting:
-                test_batch = self.data_generator.next_batch()
-            else:
-                test_batch = self.data_generator.test_batch()
+        for i in range(5):
+            test_batch = self.data_generator.test_batch()
 
-            feed_dict = {self.model.sequences: test_batch}
-            output = self.sess.run(self.model.output, feed_dict)
-            output = np.argmax(output, axis=3)[0]
-            diff = np.zeros((self.config.input_shape[0], self.config.input_shape[1], 3))
-            diff[:, :, 0] = output
-            diff[:, :, 1] = test_batch[0][-1].reshape((self.config.input_shape[0], self.config.input_shape[1]))
+            imageio.mimwrite(os.path.join(p, '%i_gt.gif' % i), test_batch[0].astype(np.uint8))
 
-            imwrite(p + '/' + str(i) + '.png', diff.astype(np.uint8))
+            images = np.array(test_batch[:, :self.config.truncated_steps])
+            for j in range(20 - self.config.truncated_steps):
+                feed_dict = {self.model.sequences: images[:, j:j+self.config.truncated_steps]}
+                output = self.sess.run(self.model.output, feed_dict)
+                output = np.expand_dims(np.argmax(output, axis=3)[0], axis=2)
+                images[0, images.shape[1] - 1, :, :, :] = output
+                images = np.append(images, [[output]], axis=1)
+
+            imageio.mimwrite(os.path.join(p, '%i_pd.gif' % i), images[0].astype(np.uint8))
         
         Logger.info("Testing finished")

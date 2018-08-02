@@ -1,5 +1,5 @@
 import tensorflow as tf
-from units import ResidualMultiplicativeBlock as RMB, CascadeMultiplicativeUnit as CMU
+from units import ResidualMultiplicativeBlock as RMB, CascadeMultiplicativeUnit as CMU, MultiplicativeUnit
 
 
 class PredCNN:
@@ -8,8 +8,11 @@ class PredCNN:
 
         with tf.name_scope('inputs'):
             self.sequences = tf.placeholder(tf.float32,
-                                            shape=[None, config.truncated_steps + 1] + config.input_shape,
+                                            shape=[None, config.truncated_steps] + config.input_shape,
                                             name='sequences')
+            self.targets = tf.placeholder(tf.float32,
+                                            shape=[None, 1] + config.input_shape,
+                                            name='targets')
 
         self.build_model()
 
@@ -27,16 +30,30 @@ class PredCNN:
             for i in range(0, self.config.decoder_rmb_num):
                 h = RMB(filters=self.config.rmb_c)(h)
 
-            h = tf.layers.conv2d(
-                h,
-                256,
-                1,
-                padding='same',
-                activation=None,
-                kernel_initializer=tf.contrib.layers.xavier_initializer()
-            )
+            with tf.name_scope('Last_RMU'):
+                h1 = tf.layers.conv2d(
+                    h,
+                    self.config.rmb_c / 2,
+                    1,
+                    padding='same',
+                    activation=None,
+                    kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                )
 
-            return h
+                h2 = MultiplicativeUnit(filters=self.config.rmb_c / 2)(h1)
+
+                h3 = MultiplicativeUnit(filters=self.config.rmb_c / 2)(h2)
+
+                h4 = tf.layers.conv2d(
+                    h3,
+                    256,
+                    1,
+                    padding='same',
+                    activation=None,
+                    kernel_initializer=tf.contrib.layers.xavier_initializer()
+                )
+
+                return h4
 
     def build_model(self):
 
@@ -51,23 +68,27 @@ class PredCNN:
             l = 0
             while len(encoders) > 1:
                 new_layer = []
-                cmu_template = tf.make_template('CMU_layer_%i' % l, CMU(filters=self.config.rmb_c), create_scope_now_=True)
+                # cmu_template = tf.make_template('CMU_layer_%i' % l, CMU(filters=self.config.rmb_c), create_scope_now_=True)
                 for first, second in zip(encoders, encoders[1:]):
-                    new_layer.append(cmu_template(first, second))
+                    new_layer.append(CMU(filters=self.config.rmb_c)(first, second))
                 encoders = new_layer
                 l += 1
 
             self.output = self.decoder(encoders[0])
 
         with tf.name_scope('loss'):
-            labels = tf.one_hot(tf.cast(tf.squeeze(self.sequences[:, -1]), tf.int32),
+            labels = tf.one_hot(tf.cast(tf.squeeze(self.targets), tf.int32),
                                 256,
                                 axis=-1,
                                 dtype=tf.float32)
 
+            # output = numpy.argmax(self.output, axis=3)[0]
+            # self.loss = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.targets, self.output))))
+            # self.loss = tf.reduce_mean(tf.pow(tf.subtract(self.targets, self.output), 2))
+            
             self.loss = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.output, labels=labels))
+                tf.nn.weighted_cross_entropy_with_logits(logits=self.output, targets=labels, pos_weight=0.05))
 
             self.optimizer = tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.loss)
 
-        self.summaries = tf.summary.merge_all('vpn')
+        self.summaries = tf.summary.merge_all('predcnn')
